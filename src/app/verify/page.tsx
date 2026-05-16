@@ -332,14 +332,14 @@ export default function VerifyPage() {
 
                 <div className="mb-6">
                   <div className="flex justify-between text-sm mb-2" style={{ color: 'var(--ink-muted)' }}>
-                    <span>Similarity Score</span>
-                    <span className="font-mono font-medium">{authorshipResult.authorshipMatch.similarityScore}%</span>
+                    <span>Semantic Similarity</span>
+                    <span className="font-mono font-medium">{authorshipResult.authorshipMatch.semanticSimilarity}%</span>
                   </div>
                   <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border)' }}>
                     <div 
                       className="h-full rounded-full transition-all duration-1000" 
                       style={{ 
-                        width: `${authorshipResult.authorshipMatch.similarityScore}%`,
+                        width: `${authorshipResult.authorshipMatch.semanticSimilarity}%`,
                         backgroundColor: authorshipResult.authorshipMatch.confidence === 'high' ? 'var(--success)' : 
                                          authorshipResult.authorshipMatch.confidence === 'medium' ? '#ca8a04' : 'var(--danger)'
                       }}
@@ -358,8 +358,8 @@ export default function VerifyPage() {
                       <p className="font-mono text-sm" style={{ color: 'var(--ink-muted)' }}>{authorshipResult.authorshipMatch.styleMatch}%</p>
                     </div>
                     <div>
-                      <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--ink-faint)' }}>Topic Overlap</p>
-                      <p className="font-mono text-sm" style={{ color: 'var(--ink-muted)' }}>{authorshipResult.authorshipMatch.topicOverlap}%</p>
+                      <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--ink-faint)' }}>Semantic Alignment</p>
+                      <p className="font-mono text-sm" style={{ color: 'var(--ink-muted)' }}>{authorshipResult.authorshipMatch.semanticAlignment}%</p>
                     </div>
                   </div>
                 </div>

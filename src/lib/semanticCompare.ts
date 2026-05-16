@@ -18,36 +18,61 @@ function calculateLenientOverlap(arr1: string[], arr2: string[]): number {
 }
 
 export function compareFingerprints(f1: Fingerprint, f2: Fingerprint): AuthorshipMatch {
-  const topicOverlap = calculateLenientOverlap(f1.topics, f2.topics);
-  const entitiesOverlap = calculateLenientOverlap(f1.entities, f2.entities);
+  const semanticAlignment = calculateLenientOverlap(f1.topics, f2.topics);
+  const conceptualReferenceMatch = calculateLenientOverlap(f1.entities, f2.entities);
   
-  const toneMatch = f1.tone?.toLowerCase() === f2.tone?.toLowerCase() ? 1 : 0.5;
+  const toneMatch = f1.tone?.toLowerCase() === f2.tone?.toLowerCase() ? 1 : 0.2; // Dropped base tone match to 0.2 for strictness
 
-  // Max diff for avg sentence length is roughly 20 words
+  // Style match components
   const maxSentenceDiff = 20;
-  const sentenceDiff = Math.abs((f1.avgSentenceLength || 15) - (f2.avgSentenceLength || 15));
-  const sentenceLengthMatch = Math.max(0, 1 - (sentenceDiff / maxSentenceDiff));
+  const sentenceLengthMatch = Math.max(0, 1 - (Math.abs((f1.avgSentenceLength || 15) - (f2.avgSentenceLength || 15)) / maxSentenceDiff));
+  const vocabMatch = Math.max(0, 1 - Math.abs((f1.vocabularyRichness || 0.5) - (f2.vocabularyRichness || 0.5)));
+  const transitionMatch = Math.max(0, 1 - Math.abs((f1.transitionFreq || 0.5) - (f2.transitionFreq || 0.5)));
+  
+  // New Expanded Metrics (with safe fallbacks to 0 for old DB entries)
+  const lengthVarianceMatch = Math.max(0, 1 - Math.abs((f1.sentenceLengthVariance || 0) - (f2.sentenceLengthVariance || 0)) / 20);
+  const paragraphMatch = Math.max(0, 1 - Math.abs((f1.paragraphCount || 1) - (f2.paragraphCount || 1)) / 10);
+  const punctuationMatch = Math.max(0, 1 - Math.abs((f1.punctuationDensity || 0) - (f2.punctuationDensity || 0)));
+  const passiveVoiceMatch = Math.max(0, 1 - Math.abs((f1.passiveVoiceRatio || 0) - (f2.passiveVoiceRatio || 0)));
+  const complexityMatch = Math.max(0, 1 - Math.abs((f1.averageWordComplexity || 0.5) - (f2.averageWordComplexity || 0.5)));
+  const rhetoricalMatch = Math.max(0, 1 - Math.abs((f1.rhetoricalPatternScore || 0.5) - (f2.rhetoricalPatternScore || 0.5)));
 
-  const vocabDiff = Math.abs((f1.vocabularyRichness || 0.5) - (f2.vocabularyRichness || 0.5));
-  const vocabMatch = Math.max(0, 1 - vocabDiff);
+  // Determine if we have the new metrics (if not, we rely on the original 3)
+  const hasNewMetrics = f1.paragraphCount !== undefined && f2.paragraphCount !== undefined;
+  
+  let styleMatch = 0;
+  if (hasNewMetrics) {
+    styleMatch = (
+      (sentenceLengthMatch * 0.15) +
+      (vocabMatch * 0.15) +
+      (transitionMatch * 0.15) +
+      (lengthVarianceMatch * 0.10) +
+      (paragraphMatch * 0.10) +
+      (punctuationMatch * 0.10) +
+      (passiveVoiceMatch * 0.10) +
+      (complexityMatch * 0.10) +
+      (rhetoricalMatch * 0.05)
+    );
+  } else {
+    // Fallback if older fingerprints are compared
+    styleMatch = (sentenceLengthMatch * 0.4) + (vocabMatch * 0.35) + (transitionMatch * 0.25);
+  }
 
-  const transitionDiff = Math.abs((f1.transitionFreq || 0.5) - (f2.transitionFreq || 0.5));
-  const transitionMatch = Math.max(0, 1 - transitionDiff);
-
-  // Style match: weighted average
-  // sentence length 40%, vocab richness 35%, transition freq 25%
-  const styleMatch = (sentenceLengthMatch * 0.4) + (vocabMatch * 0.35) + (transitionMatch * 0.25);
-
-  // Overall similarity: style 45%, topics 25%, entities 15%, tone 15%
-  const similarityScore = (styleMatch * 0.45) + (topicOverlap * 0.25) + (entitiesOverlap * 0.15) + (toneMatch * 0.15);
+  // Raw semantic similarity based on new weights
+  const semanticSimilarity = (styleMatch * 0.45) + (semanticAlignment * 0.25) + (conceptualReferenceMatch * 0.15) + (toneMatch * 0.15);
 
   let confidence: 'high' | 'medium' | 'low';
   let reasoning = '';
 
-  if (similarityScore > 0.8) {
+  // Anti-false-positive penalty logic:
+  // If semantic similarity is high but style/tone is vastly different, it's a different author writing about the same topic.
+  if (semanticAlignment >= 0.7 && (styleMatch < 0.5 || toneMatch < 0.5)) {
+    confidence = 'medium';
+    reasoning = `Although both documents discuss highly similar concepts (${Math.round(semanticAlignment*100)}% overlap), the writing rhythm, tone, and sentence structure differ significantly (${Math.round(styleMatch*100)}% match), reducing authorship confidence.`;
+  } else if (semanticSimilarity > 0.8 && styleMatch >= 0.7) {
     confidence = 'high';
     reasoning = `Writing style patterns strongly match. Topic clusters and key entities significantly overlap. High confidence this document is derived from the secured original.`;
-  } else if (similarityScore >= 0.5) {
+  } else if (semanticSimilarity >= 0.5) {
     confidence = 'medium';
     reasoning = `Moderate overlap in stylistic choices and subject matter. Possible derivation or shared inspiration.`;
   } else {
@@ -56,9 +81,10 @@ export function compareFingerprints(f1: Fingerprint, f2: Fingerprint): Authorshi
   }
 
   return {
-    similarityScore: Math.round(similarityScore * 100),
+    semanticSimilarity: Math.round(semanticSimilarity * 100),
     styleMatch: Math.round(styleMatch * 100),
-    topicOverlap: Math.round(topicOverlap * 100),
+    semanticAlignment: Math.round(semanticAlignment * 100),
+    conceptualReferenceMatch: Math.round(conceptualReferenceMatch * 100),
     confidence,
     reasoning
   };
