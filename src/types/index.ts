@@ -37,20 +37,12 @@ export interface Fingerprint {
   entities: string[];
   tone: string;
   transitionFreq: number;
-  // Expanded metrics
-  sentenceLengthVariance?: number;
-  paragraphCount?: number;
-  punctuationDensity?: number;
-  passiveVoiceRatio?: number;
-  averageWordComplexity?: number;
-  rhetoricalPatternScore?: number;
 }
 
 export interface AuthorshipMatch {
-  semanticSimilarity: number;
+  similarityScore: number;
   styleMatch: number;
-  semanticAlignment: number;
-  conceptualReferenceMatch: number;
+  topicOverlap: number;
   confidence: 'high' | 'medium' | 'low';
   reasoning: string;
 }
