@@ -38,8 +38,8 @@ export function compareFingerprints(f1: Fingerprint, f2: Fingerprint): Authorshi
   // sentence length 40%, vocab richness 35%, transition freq 25%
   const styleMatch = (sentenceLengthMatch * 0.4) + (vocabMatch * 0.35) + (transitionMatch * 0.25);
 
-  // Overall similarity: topics 35%, style 30%, entities 25%, tone 10%
-  const similarityScore = (topicOverlap * 0.35) + (styleMatch * 0.3) + (entitiesOverlap * 0.25) + (toneMatch * 0.10);
+  // Overall similarity: style 45%, topics 25%, entities 15%, tone 15%
+  const similarityScore = (styleMatch * 0.45) + (topicOverlap * 0.25) + (entitiesOverlap * 0.15) + (toneMatch * 0.15);
 
   let confidence: 'high' | 'medium' | 'low';
   let reasoning = '';
