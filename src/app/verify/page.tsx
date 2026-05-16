@@ -65,7 +65,7 @@ export default function VerifyPage() {
     setAuthorshipError(null);
     setAuthorshipResult(null);
     try {
-      const res = await fetch('/api/verify', {
+      const res = await fetch('/api/authorship', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

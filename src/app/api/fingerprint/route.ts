@@ -10,7 +10,7 @@ export async function POST(request: Request) {
     const authHeader = request.headers.get('Authorization');
     const token = authHeader?.replace('Bearer ', '');
     const supabase = createServerSupabaseClient(token);
-    
+
     const { data: { user }, error: authError } = token
       ? await supabase.auth.getUser(token)
       : await supabase.auth.getUser();
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
 
     // Delete any old fingerprint first (upsert behavior)
     await supabase.from('document_fingerprints').delete().eq('document_id', documentId);
-    
+
     // Store using authenticated client
     const { error: insertError } = await supabase
       .from('document_fingerprints')

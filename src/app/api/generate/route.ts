@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     const openai = getOpenAI();
 
     const response = await openai.chat.completions.create({
-      model: 'llama-3.1-8b-instant',
+      model: 'llama-3.1-70b-versatile',
       messages: [
         {
           role: 'system',
