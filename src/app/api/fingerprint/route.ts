@@ -41,18 +41,8 @@ export async function POST(request: Request) {
     // Extract fingerprint
     const fingerprint = await extractFingerprint(text);
 
-    // Use service role to bypass RLS for the upsert
-    const { createClient } = await import('@supabase/supabase-js');
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-
-    // Delete any old fingerprint first (upsert behavior)
-    await supabaseAdmin.from('document_fingerprints').delete().eq('document_id', documentId);
-
-    // Store using admin client
-    const { error: insertError } = await supabaseAdmin
+    // Store using authenticated client
+    const { error: insertError } = await supabase
       .from('document_fingerprints')
       .insert({
         document_id: documentId,
