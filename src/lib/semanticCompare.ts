@@ -100,16 +100,13 @@ export function compareFingerprints(f1: Fingerprint, f2: Fingerprint): Authorshi
   const styleMatch = (sentenceMatch * 0.40) + (vocabMatch * 0.35) + (transitionMatch * 0.25);
 
   // ── 5. RAW WEIGHTED SCORE ─────────────────────────────────────────────────
-  // Weights designed for target outcomes:
-  //  Test1 (minor paraphrase):  topics≈0.95, entities≈0.90, tone≈1.0, style≈0.95 → raw≈0.95
-  //  Test2 (moderate rewrite):  topics≈0.80, entities≈0.75, tone≈1.0, style≈0.85 → raw≈0.82
-  //  Test3 (different style):   topics≈0.50, entities≈0.30, tone≈0.5, style≈0.60 → raw≈0.50
-  //  Test4 (diff topic):        topics≈0.05, entities≈0.00, tone≈0.2, style≈0.40 → raw≈0.18
+  // Weights: topics dominate (50%) so different-topic texts cannot score high
+  // regardless of style similarity. Style is secondary (20%).
   const rawScore =
-    (topicOverlap   * 0.40) +
+    (topicOverlap   * 0.50) +
     (entitiesOverlap * 0.15) +
     (toneMatch       * 0.15) +
-    (styleMatch      * 0.30);
+    (styleMatch      * 0.20);
 
   // ── 6. CALIBRATION CURVE ──────────────────────────────────────────────────
   // Piecewise linear calibration:
