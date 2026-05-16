@@ -1,28 +1,13 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { extractFingerprint } from '@/lib/fingerprint';
 import { compareFingerprints } from '@/lib/semanticCompare';
 
 export const runtime = 'nodejs';
 
-/**
- * Public verification endpoint — no auth required.
- * Uses service role key to bypass RLS since anyone should be able
- * to verify a hash without being logged in.
- */
-function getAdminClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-  // Use service role if available, otherwise fall back to anon key
-  return createClient(url, serviceKey || anonKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-}
-
 export async function POST(request: Request) {
   try {
-    const supabase = getAdminClient();
+    const supabase = createServerSupabaseClient();
     const body = await request.json();
     const { suspiciousText, claimedHash } = body;
 
@@ -30,7 +15,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing suspiciousText or claimedHash' }, { status: 400 });
     }
 
-    // Find the original document ID via hash (bypasses RLS)
+    // Find the original document ID via hash
     const { data: document, error: docError } = await supabase
       .from('cover_letters')
       .select('id')

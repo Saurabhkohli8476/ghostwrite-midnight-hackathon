@@ -1,22 +1,8 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { extractFingerprint } from '@/lib/fingerprint';
 
 export const runtime = 'nodejs';
-
-/**
- * Admin client for inserting into document_fingerprints table.
- * This table may have RLS, so we use service role to guarantee writes.
- */
-function getAdminClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-  return createClient(url, serviceKey || anonKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-}
 
 export async function POST(request: Request) {
   try {
@@ -40,7 +26,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing text or documentId' }, { status: 400 });
     }
 
-    // Verify document belongs to user (using their token for RLS)
+    // Verify document belongs to user
     const { data: document, error: docError } = await supabase
       .from('cover_letters')
       .select('id')
@@ -55,13 +41,11 @@ export async function POST(request: Request) {
     // Extract fingerprint
     const fingerprint = await extractFingerprint(text);
 
-    // Store using admin client to bypass RLS on document_fingerprints
-    const adminClient = getAdminClient();
-
-    // Upsert: delete any existing fingerprint for this document first, then insert
-    await adminClient.from('document_fingerprints').delete().eq('document_id', documentId);
+    // Delete any old fingerprint first (upsert behavior)
+    await supabase.from('document_fingerprints').delete().eq('document_id', documentId);
     
-    const { error: insertError } = await adminClient
+    // Store using authenticated client
+    const { error: insertError } = await supabase
       .from('document_fingerprints')
       .insert({
         document_id: documentId,
