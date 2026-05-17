@@ -15,12 +15,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing suspiciousText or claimedHash' }, { status: 400 });
     }
 
-    // Find the original document ID via hash
-    const { data: document, error: docError } = await supabase
+    // Find the original document ID via hash safely
+    const { data: documentArray, error: docError } = await supabase
       .from('cover_letters')
       .select('id')
       .eq('midnight_hash', claimedHash)
-      .single();
+      .limit(1);
+
+    const document = documentArray?.[0];
 
     if (docError || !document) {
       return NextResponse.json({ error: 'No secured document found with that hash' }, { status: 404 });

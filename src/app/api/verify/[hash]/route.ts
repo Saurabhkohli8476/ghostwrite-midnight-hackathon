@@ -14,13 +14,14 @@ export async function GET(
 
     const supabase = createServerSupabaseClient();
 
-    const { data, error } = await supabase
+    const { data: dataArray, error } = await supabase
       .from('cover_letters')
       .select('*')
       .eq('midnight_hash', hash)
       .eq('is_secured', true)
-      .limit(1)
-      .single();
+      .limit(1);
+
+    const data = dataArray?.[0];
 
     if (error || !data) {
       return NextResponse.json({ verified: false }, { status: 404 });

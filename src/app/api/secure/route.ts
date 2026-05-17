@@ -45,10 +45,11 @@ export async function POST(request: Request) {
       })
       .eq('id', letterId)
       .eq('user_id', user.id)
-      .select()
-      .single();
+      .select();
 
-    if (error || !data) {
+    const updatedDocument = data?.[0];
+
+    if (error || !updatedDocument) {
       return NextResponse.json({ error: 'Letter not found or update failed' }, { status: 404 });
     }
 

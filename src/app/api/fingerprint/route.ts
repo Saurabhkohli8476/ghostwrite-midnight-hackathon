@@ -27,12 +27,14 @@ export async function POST(request: Request) {
     }
 
     // Verify document belongs to user
-    const { data: document, error: docError } = await supabase
+    const { data: documentArray, error: docError } = await supabase
       .from('cover_letters')
       .select('id')
       .eq('id', documentId)
       .eq('user_id', user.id)
-      .single();
+      .limit(1);
+
+    const document = documentArray?.[0];
 
     if (docError || !document) {
       return NextResponse.json({ error: 'Document not found or unauthorized' }, { status: 404 });
