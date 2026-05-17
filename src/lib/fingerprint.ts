@@ -43,12 +43,12 @@ Return ONLY a raw JSON object with NO markdown, NO backticks, NO explanation:
   try {
     const data = JSON.parse(content);
     return {
-      topics: data.topics || [],
-      avgSentenceLength: data.avgSentenceLength || 15,
-      vocabularyRichness: data.vocabularyRichness || 0.5,
-      entities: data.entities || [],
-      tone: data.tone || 'formal',
-      transitionFreq: data.transitionFreq || 0.5,
+      topics: Array.isArray(data.topics) ? data.topics.map(String) : [],
+      avgSentenceLength: Number(data.avgSentenceLength) || 15,
+      vocabularyRichness: Number(data.vocabularyRichness) || 0.5,
+      entities: Array.isArray(data.entities) ? data.entities.map(String) : [],
+      tone: String(data.tone || 'formal'),
+      transitionFreq: Number(data.transitionFreq) || 0.5,
     };
   } catch (error) {
     console.error('Failed to parse fingerprint JSON', error);

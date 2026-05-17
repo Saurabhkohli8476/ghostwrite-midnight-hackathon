@@ -60,29 +60,46 @@ export default function CreatePage() {
       const fallbackTitle = jobDescription.split('\n')[0].substring(0, 50).trim() || 'Untitled Document';
       const finalJobTitle = jobTitle || fallbackTitle;
 
+      // Use whichever text the user actually has — generatedLetter if AI was used,
+      // otherwise userExperience (the textarea they typed into directly).
+      const documentText = generatedLetter || userExperience;
+
+      if (!documentText.trim()) {
+        toast('Please write or generate a document before sealing.', 'error');
+        return;
+      }
+
       const saveRes = await fetch('/api/letters', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
         },
-        body: JSON.stringify({ jobTitle: finalJobTitle, company, jobDescription, userExperience, generatedLetter }),
+        body: JSON.stringify({ jobTitle: finalJobTitle, company, jobDescription, userExperience, generatedLetter: documentText }),
       });
 
       const saveData = await saveRes.json();
       if (!saveRes.ok) throw new Error(saveData.error || 'Failed to save document');
 
-      // Silently generate and store semantic fingerprint
-      await fetch('/api/fingerprint', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
-        },
-        body: JSON.stringify({ text: generatedLetter, documentId: saveData.id })
-      });
+      // Generate and store semantic fingerprint — critical for authorship checks
+      try {
+        const fpRes = await fetch('/api/fingerprint', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          },
+          body: JSON.stringify({ text: documentText, documentId: saveData.id })
+        });
+        if (!fpRes.ok) {
+          const fpErr = await fpRes.json();
+          console.error('Fingerprint storage failed:', fpErr);
+        }
+      } catch (fpErr) {
+        console.error('Fingerprint request failed:', fpErr);
+      }
 
-      secure(generatedLetter, saveData.id);
+      secure(documentText, saveData.id);
     } catch (err: any) {
       toast(err.message || 'Failed to initiate seal', 'error');
     }

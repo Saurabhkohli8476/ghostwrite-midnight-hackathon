@@ -26,12 +26,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No secured document found with that hash' }, { status: 404 });
     }
 
-    // Find the stored fingerprint
-    const { data: storedFingerprint, error: fpError } = await supabase
+    // Find the stored fingerprint safely
+    const { data: storedFingerprintArray, error: fpError } = await supabase
       .from('document_fingerprints')
       .select('fingerprint')
       .eq('document_id', document.id)
-      .single();
+      .limit(1);
+
+    const storedFingerprint = storedFingerprintArray?.[0];
 
     if (fpError || !storedFingerprint) {
       return NextResponse.json({ error: 'Fingerprint missing for this document. Please re-secure the document.' }, { status: 404 });

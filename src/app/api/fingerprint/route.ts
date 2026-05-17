@@ -41,6 +41,9 @@ export async function POST(request: Request) {
     // Extract fingerprint
     const fingerprint = await extractFingerprint(text);
 
+    // Delete any existing fingerprints for this document to prevent .single() errors during verification
+    await supabase.from('document_fingerprints').delete().eq('document_id', documentId);
+
     // Store using authenticated client
     const { error: insertError } = await supabase
       .from('document_fingerprints')
