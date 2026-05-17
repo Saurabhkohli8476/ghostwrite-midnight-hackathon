@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
-import { ArrowRight, Shield, FileText, Lock } from 'lucide-react';
+import { ArrowRight, Shield, FileText, Lock, Brain, Hash, CheckCircle } from 'lucide-react';
 
 function useInView(threshold = 0.15) {
   const ref = useRef<HTMLDivElement>(null);
@@ -135,6 +135,44 @@ export default function HomePage() {
       <div className="mx-auto max-w-2xl px-6">
         <div className="divider-ornament text-lg" style={{ color: 'var(--ink-faint)' }}>✦</div>
       </div>
+
+      {/* ── THE PIPELINE ───────────────────────────────────────── */}
+      <section className="mx-auto max-w-6xl px-6 py-20 overflow-hidden">
+        <RevealSection>
+          <div className="relative flex flex-col md:flex-row items-center justify-between gap-6 md:gap-0">
+            {/* Desktop connecting line */}
+            <div className="hidden md:block absolute top-8 left-12 right-12 h-px" style={{ backgroundColor: 'var(--border)' }} />
+            
+            {[
+              { icon: FileText, label: 'Document' },
+              { icon: Brain, label: 'AI Semantic Fingerprint' },
+              { icon: Hash, label: 'Cryptographic Hash' },
+              { icon: Shield, label: 'Midnight Receipt' },
+              { icon: CheckCircle, label: 'Private Verification' }
+            ].map((step, i, arr) => (
+              <div key={step.label} className="relative z-10 flex flex-col items-center group w-40">
+                <div 
+                  className="flex h-16 w-16 items-center justify-center rounded-2xl transition-all duration-500 group-hover:scale-110 group-hover:-translate-y-1"
+                  style={{ 
+                    border: '1px solid var(--border)', 
+                    backgroundColor: 'var(--surface)', 
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.04)' 
+                  }}
+                >
+                  <step.icon className="h-6 w-6 transition-colors duration-500" style={{ color: 'var(--accent)' }} />
+                </div>
+                <p className="mt-5 text-[10px] font-semibold uppercase tracking-[0.15em] text-center leading-relaxed" style={{ color: 'var(--ink)' }}>
+                  {step.label}
+                </p>
+                {/* Mobile connecting line */}
+                {i !== arr.length - 1 && (
+                  <div className="md:hidden h-10 w-px my-2" style={{ backgroundColor: 'var(--border)' }} />
+                )}
+              </div>
+            ))}
+          </div>
+        </RevealSection>
+      </section>
 
       {/* ── HOW IT WORKS ─────────────────────────────────────── */}
       <section className="mx-auto max-w-5xl px-6 py-28">
